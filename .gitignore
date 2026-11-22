@@ -1,0 +1,10 @@
+# личные данные: на какой серии остановился
+progress.json
+progress.json.tmp
+test/progress-test.json*
+
+# тесты
+test/profile/
+test/*.png
+__pycache__/
+*.pyc

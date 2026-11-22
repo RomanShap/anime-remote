@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Пульт аниме</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #191c23; --line: #2a2f3a; --text: #e9ebf1; --dim: #8d94a5;
+    --accent: #ff9f1c; --accent-ink: #1b1204; --warn: #ffd166;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+    max-width: 520px; margin: 0 auto; -webkit-user-select: none; user-select: none;
+  }
+  button {
+    font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; min-height: 58px; padding: 8px 6px; touch-action: manipulation; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  button:active { background: #262b36; transform: scale(.97); }
+  button small { color: var(--dim); font-size: 12px; }
+  button svg { width: 30px; height: 30px; fill: currentColor; }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .off .ctl, .off header { display: none; }
+
+  #saved { margin-top: 8px; font-size: 13px; color: var(--dim); min-height: 18px; }
+  #saved.go { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  #cont { display: grid; gap: 8px; }
+  .item { display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 8px; }
+  .item .go { align-items: flex-start; text-align: left; padding: 10px 14px; min-height: 56px; min-width: 0; }
+  .item .go small { display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .go b { font-weight: 600; font-size: 15px; width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .item.cur .go { border-color: var(--accent); }
+  .item .del { min-height: 56px; color: var(--dim); font-size: 20px; }
+  #empty { color: var(--dim); font-size: 14px; }
+
+  #note {
+    display: none; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px;
+    background: #2b2410; border: 1px solid #5a4a16; color: var(--warn); font-size: 14px;
+  }
+  #note.show { display: block; }
+
+  header { margin-bottom: 12px; }
+  #title {
+    font-size: 18px; font-weight: 600; margin: 0 0 4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .meta { display: flex; justify-content: space-between; gap: 10px; color: var(--dim); font-size: 14px; }
+  #ep { color: var(--accent); font-weight: 600; }
+  #bar { height: 6px; border-radius: 3px; background: var(--line); margin-top: 8px; overflow: hidden; }
+  #fill { height: 100%; width: 0; background: var(--accent); transition: width .4s linear; }
+
+  .row { display: grid; gap: 10px; margin-bottom: 10px; }
+  .main { grid-template-columns: 1fr 1.25fr 1fr; }
+  .main button { min-height: 92px; }
+  .main button svg { width: 40px; height: 40px; }
+  #toggle { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  #toggle:active { background: #e68a0c; }
+  #toggle svg { width: 48px; height: 48px; }
+  .three { grid-template-columns: repeat(3, 1fr); }
+  .two { grid-template-columns: repeat(2, 1fr); }
+
+  h2 { font-size: 13px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
+  #eps { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; max-height: 46vh; overflow-y: auto; padding-bottom: 4px; }
+  #eps button { min-height: 48px; border-radius: 12px; font-variant-numeric: tabular-nums; }
+  #eps button.cur { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body class="off">
+  <div id="note" role="status"></div>
+
+  <header>
+    <p id="title">Пульт аниме</p>
+    <div class="meta"><span id="ep">&nbsp;</span><span id="time"></span></div>
+    <div id="bar"><div id="fill"></div></div>
+    <div id="saved"></div>
+  </header>
+
+  <div class="ctl">
+    <div class="row main">
+      <button id="prev" aria-label="Предыдущая серия">
+        <svg viewBox="0 0 24 24"><path d="M18 5v14l-9-7zM5.5 5H8v14H5.5z"/></svg><small>серия назад</small>
+      </button>
+      <button id="toggle" aria-label="Пауза или воспроизведение">
+        <svg viewBox="0 0 24 24"><path id="ticon" d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button id="next" aria-label="Следующая серия">
+        <svg viewBox="0 0 24 24"><path d="M6 5v14l9-7zM16 5h2.5v14H16z"/></svg><small>следующая</small>
+      </button>
+    </div>
+
+    <div class="row three">
+      <button data-seek="-10">−10 с</button>
+      <button data-seek="10">+10 с</button>
+      <button data-seek="90">+90 с<small>опенинг</small></button>
+    </div>
+
+    <div class="row three">
+      <button data-vol="-0.1">Тише</button>
+      <button id="mute"><span id="vol">Звук</span><small>вкл/выкл</small></button>
+      <button data-vol="0.1">Громче</button>
+    </div>
+
+    <div class="row two">
+      <button id="full" aria-pressed="false">Весь экран<small id="fullv">выкл</small></button>
+      <button id="auto" aria-pressed="false">Автопереход<small>к следующей серии: <span id="autov">выкл</span></small></button>
+    </div>
+
+    <h2>Серии</h2>
+    <div id="eps"></div>
+  </div>
+
+  <h2>Продолжить просмотр</h2>
+  <div id="cont"></div>
+  <p id="empty">Здесь появится аниме, которое ты смотришь: пульт сам запоминает серию и место, когда серия идёт дольше 30 секунд.</p>
+
+<script>
+(function () {
+  'use strict';
+  var HEAD = { 'X-Anime-Remote': '1', 'Content-Type': 'application/json' };
+  var HINTS = {
+    autoplay: 'Firefox не дал запустить видео без тебя. Один раз кликни по странице на компьютере (или разреши автовоспроизведение для animevost.org), дальше будет работать с телефона.',
+    f11: 'Полный экран не включился: окно Firefox с аниме должно быть активным (поверх остальных).',
+    nonew: 'Последняя серия на сайте уже досмотрена, новой пока нет.'
+  };
+  var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
+  var $ = function (id) { return document.getElementById(id); };
+
+  var link = true, online = false, st = null, epsKey = '', toast = '', toastUntil = 0, lastCur = -1;
+  var prog = [], progKey = '';
+  var MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+  function when(ts) {
+    var d = new Date(ts * 1000), now = new Date();
+    var days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) -
+                           new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    return days <= 0 ? 'сегодня' : days === 1 ? 'вчера' : d.getDate() + ' ' + MONTHS[d.getMonth()];
+  }
+  function spot(p) {       // «5 серия · 12:30» или «5 серия досмотрена»
+    var name = p.epName || (p.ep + 1) + ' серия';
+    return p.finished ? name + ' досмотрена' : name + ' · ' + fmt(p.time);
+  }
+  function post(path, body) {
+    return fetch(path, { method: 'POST', headers: HEAD, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+  }
+  function resume(p) {
+    if (navigator.vibrate) { navigator.vibrate(12); }
+    post('/api/resume', { key: p.url }).then(function (r) {
+      say(r.how === 'tab' ? 'Возвращаю: ' + spot(p)
+        : r.ok ? 'Открываю на компьютере: ' + (p.title || 'аниме')
+        : 'Не получилось открыть страницу на компьютере.');
+      setTimeout(refresh, 350);
+    }).catch(function () { link = false; render(); });
+  }
+
+  function renderProgress() {
+    var curUrl = link && online && st ? st.url : '';
+    var key = JSON.stringify(prog) + '|' + curUrl;
+    if (key === progKey) { return; }
+    progKey = key;
+    var box = $('cont');
+    box.textContent = '';
+    $('empty').style.display = prog.length ? 'none' : '';
+    prog.forEach(function (p) {
+      var row = document.createElement('div');
+      row.className = 'item' + (p.url === curUrl ? ' cur' : '');
+      var go = document.createElement('button');
+      go.className = 'go';
+      var b = document.createElement('b');
+      b.textContent = p.title || 'Аниме';
+      var s = document.createElement('small');
+      s.textContent = spot(p) + (p.finished || !p.duration ? '' : ' из ' + fmt(p.duration)) + ' · ' + when(p.updated);
+      go.appendChild(b);
+      go.appendChild(s);
+      go.onclick = function () { resume(p); };
+      var del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '×';
+      del.setAttribute('aria-label', 'Убрать из списка');
+      del.onclick = function () {
+        if (!confirm('Убрать из списка «' + (p.title || 'аниме') + '»?')) { return; }
+        post('/api/forget', { key: p.url }).then(refresh).catch(function () { link = false; render(); });
+      };
+      row.appendChild(go);
+      if (p.url === curUrl) {                 // то, что идёт сейчас, всё равно запомнится снова
+        del.disabled = true;
+        del.style.visibility = 'hidden';
+      }
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  function fmt(s) {
+    s = Math.max(0, s | 0);
+    var h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, x = s % 60;
+    return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (x < 10 ? '0' : '') + x;
+  }
+  function say(text) { toast = text; toastUntil = Date.now() + 3000; render(); }
+
+  function render() {
+    var on = link && online && st;
+    document.body.classList.toggle('off', !on);
+
+    var note = '';
+    if (!link) { note = 'Нет связи с компьютером. Пульт на нём запущен? Телефон в том же Wi‑Fi?'; }
+    else if (Date.now() < toastUntil) { note = toast; }
+    else if (!on) {
+      note = prog.length ? 'Вкладка с аниме на компьютере не открыта. Выбери ниже, что продолжить, или открой страницу сам.'
+        : 'Открой на компьютере в Firefox страницу аниме на animevost.org. Вкладка должна быть на экране.';
+    }
+    else if (st.hint && HINTS[st.hint]) { note = HINTS[st.hint]; }
+    $('note').textContent = note;
+    $('note').classList.toggle('show', !!note);
+    renderProgress();
+    if (!on) { return; }
+
+    var mine = null;
+    prog.forEach(function (p) { if (p.url === st.url) { mine = p; } });
+    var away = !!mine && mine.ep !== st.current;      // сейчас открыта другая серия
+    $('saved').textContent = mine ? 'Запомнено: ' + spot(mine) + (away ? ' — вернуться' : '') : '';
+    $('saved').classList.toggle('go', away);
+    $('saved').onclick = away ? function () { resume(mine); } : null;
+
+    var eps = st.episodes || [], cur = st.current;
+    $('title').textContent = st.title || 'Аниме';
+    $('ep').textContent = cur >= 0 && eps[cur] ? eps[cur] + ' · ' + (cur + 1) + ' из ' + eps.length : '';
+    $('time').textContent = !st.video ? 'плеер загружается…'
+      : st.duration ? fmt(st.time) + ' / ' + fmt(st.duration) : (st.paused ? 'на паузе' : fmt(st.time));
+    $('fill').style.width = st.duration ? Math.min(100, st.time / st.duration * 100) + '%' : '0';
+    $('ticon').setAttribute('d', st.video && !st.paused ? PAUSE : PLAY);
+    $('vol').textContent = st.volume == null ? 'Звук' : st.muted ? 'Без звука' : 'Звук ' + st.volume + '%';
+    $('full').setAttribute('aria-pressed', String(!!st.full));
+    $('fullv').textContent = st.full ? 'вкл' : 'выкл';
+    $('auto').setAttribute('aria-pressed', String(!!st.autonext));
+    $('autov').textContent = st.autonext ? 'вкл' : 'выкл';
+
+    var key = eps.join('|');
+    var box = $('eps');
+    if (key !== epsKey) {
+      epsKey = key;
+      lastCur = -1;
+      box.textContent = '';
+      eps.forEach(function (name, i) {
+        var b = document.createElement('button');
+        var num = name.match(/\d+/);
+        b.textContent = num && /сери/i.test(name) ? num[0] : name;
+        b.setAttribute('aria-label', name);
+        b.dataset.ep = i;
+        box.appendChild(b);
+      });
+    }
+    if (cur !== lastCur) {
+      lastCur = cur;
+      Array.prototype.forEach.call(box.children, function (b, i) { b.classList.toggle('cur', i === cur); });
+      var c = box.children[cur];
+      if (c) { box.scrollTop = Math.max(0, c.offsetTop - box.offsetTop - box.clientHeight / 2 + c.offsetHeight / 2); }
+    }
+  }
+
+  function refresh() {
+    return fetch('/api/state', { headers: HEAD, cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { link = true; online = !!j.online; st = j.state; prog = j.progress || []; })
+      .catch(function () { link = false; })
+      .then(render);
+  }
+
+  function send(action, value) {
+    if (navigator.vibrate) { navigator.vibrate(12); }
+    fetch('/api/cmd', { method: 'POST', headers: HEAD, body: JSON.stringify({ action: action, value: value }) })
+      .then(function () { setTimeout(refresh, 350); })
+      .catch(function () { link = false; render(); });
+  }
+
+  $('toggle').onclick = function () { send('toggle'); };
+  $('mute').onclick = function () { send('mute'); };
+  $('full').onclick = function () { send('full'); };
+  $('auto').onclick = function () { send('autonext', !(st && st.autonext)); };
+  $('next').onclick = function () {
+    if (st && st.current >= (st.episodes || []).length - 1) { return say('Это последняя серия на сайте.'); }
+    send('next');
+  };
+  $('prev').onclick = function () {
+    if (st && st.current <= 0) { return say('Это первая серия.'); }
+    send('prev');
+  };
+  document.body.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) { return; }
+    if (b.dataset.seek) { send('seek', Number(b.dataset.seek)); }
+    else if (b.dataset.vol) { send('vol', Number(b.dataset.vol)); }
+    else if (b.dataset.ep != null) { send('ep', Number(b.dataset.ep)); }
+  });
+
+  setInterval(function () { if (!document.hidden) { refresh(); } }, 1000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { refresh(); } });
+  refresh();
+})();
+</script>
+</body>
+</html>
