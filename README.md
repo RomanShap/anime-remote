@@ -6,7 +6,7 @@
 
 ## Установка
 
-1. В Firefox открой файл расширения `anime-remote-<версия>.xpi` (раздел [Releases](https://github.com/RomanShap/anime-remote/releases)) и нажми «Добавить».
+1. Скачай файл расширения `anime-remote-<версия>.xpi` из раздела [Releases](https://github.com/RomanShap/anime-remote/releases/latest) и открой его в Firefox (клик по файлу в панели загрузок или перетащи в окно Firefox), нажми «Добавить». Расширение подписано Mozilla.
 2. Нажми значок пульта на панели Firefox. Появится QR-код.
 3. Наведи на него камеру телефона и открой ссылку. Можно добавить страницу на главный экран.
 
