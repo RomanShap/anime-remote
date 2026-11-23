@@ -1,0 +1,44 @@
+{
+  "manifest_version": 2,
+  "name": "Anime Remote",
+  "version": "2.0.0",
+  "description": "Пульт с телефона для видео в Firefox: серии, пауза, перемотка, звук, весь экран и «на чём остановился». animevost, HDrezka, kinogo и другие сайты с видео.",
+  "homepage_url": "https://github.com/RomanShap/anime-remote",
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "permissions": [
+    "<all_urls>",
+    "storage",
+    "tabs",
+    "webNavigation"
+  ],
+  "background": {
+    "scripts": ["protocol.js", "background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["sites.js", "content.js"],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_action": {
+    "default_title": "Anime Remote: пульт с телефона",
+    "default_icon": "icons/icon.svg",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "anime-remote@romanshap.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["browsingActivity", "websiteContent"]
+      }
+    }
+  }
+}

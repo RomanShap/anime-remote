@@ -1,10 +1,14 @@
-# личные данные: на какой серии остановился
+# личные данные: на какой серии остановился (старый Python-сервер)
 progress.json
 progress.json.tmp
 test/progress-test.json*
 
+# сборка
+dist/
+
 # тесты
 test/profile/
+test/profile-*/
 test/*.png
 __pycache__/
 *.pyc

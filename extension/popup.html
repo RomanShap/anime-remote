@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Пульт с телефона</h1>
+  <p class="lead">Наведи камеру телефона на код и открой ссылку. Телефон и компьютер могут быть в любой сети.</p>
+  <canvas id="qr" width="232" height="232" aria-label="QR-код со ссылкой на пульт"></canvas>
+  <div class="row">
+    <button id="copy">Скопировать ссылку</button>
+    <button id="open">Открыть здесь</button>
+  </div>
+
+  <ul class="status">
+    <li><span id="relayDot" class="dot"></span><span id="relayText">Подключаюсь…</span></li>
+    <li><span id="phoneDot" class="dot"></span><span id="phoneText">Телефон не подключён</span></li>
+    <li id="nowRow" hidden>Сейчас: <b id="now"></b></li>
+  </ul>
+
+  <p id="hint" class="hint" hidden></p>
+
+  <details>
+    <summary>Ещё</summary>
+    <p class="small">Ссылка работает, пока её не заменишь. Кто её знает, может управлять видео в этом браузере, поэтому не выкладывай её.</p>
+    <label>Ссылка на пульт<input id="linkText" type="text" readonly spellcheck="false"></label>
+    <button id="reset">Новая ссылка (старая перестанет работать)</button>
+    <label>Страница пульта<input id="page" type="url" spellcheck="false"></label>
+    <label>Ретранслятор<input id="relay" type="url" spellcheck="false"></label>
+    <button id="save">Сохранить</button>
+  </details>
+
+  <script src="lib/qrcode.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
